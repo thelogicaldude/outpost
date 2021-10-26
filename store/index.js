@@ -34,25 +34,15 @@ export const getters = {
     const issuer = state.tribe_info.issuer || state.tribe_config.issuer
 
     return issuer
-  },
-  muting_account: state => state.tribe_info.issuer
+  }
 }
 
 export const mutations = {
   SET_TRIBE_CONFIG (state, data) {
-    data.author_curve_exponent = Number(data.author_curve_exponent)
-
     state.tribe_config = data
   },
 
   SET_TRIBE_INFO (state, data) {
-    data = {
-      ...data,
-      reward_pool: Number(data.reward_pool),
-      pending_rshares: Number(data.pending_rshares),
-      precision: Number(data.precision)
-    }
-
     state.tribe_info = data
   },
 
@@ -68,9 +58,6 @@ export const actions = {
         this.$scot.$get('info'),
         this.$scot.$get('config')
       ])
-
-      config.vote_regeneration_seconds = Number(config.vote_regeneration_days) * 24 * 60 * 60
-      config.downvote_regeneration_seconds = Number(config.downvote_regeneration_days) * 24 * 60 * 60
 
       commit('SET_TRIBE_INFO', info)
       commit('SET_TRIBE_CONFIG', config)

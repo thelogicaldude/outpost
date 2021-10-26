@@ -117,7 +117,7 @@
     </b-navbar>
 
     <b-tooltip v-if="$auth.loggedIn" target="voting_power" placement="bottom">
-      Voting Power: {{ (voting_power / 100).toFixed(2) }}%<br>
+      Voting Power: {{ (voting_power /100).toFixed(2) }}%<br>
       Downvoting Power: {{ (downvoting_power / 100).toFixed(2) }}%
     </b-tooltip>
   </header>

@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-export default ({ $config, store }, inject) => {
+export default ({ $config }, inject) => {
   const sidechain = {
     async call (endpoint, request) {
       const rpcNode = $config.SIDECHAIN_RPC
@@ -362,19 +362,6 @@ export default ({ $config, store }, inject) => {
       }
 
       return this.blockchain(request)
-    },
-
-    getVotingPower (account, rewardPoolId = store.state.tribe_config.reward_pool_id) {
-      const request = {
-        method: 'findOne',
-        params: {
-          contract: 'comments',
-          table: 'votingPower',
-          query: { account, rewardPoolId }
-        }
-      }
-
-      return this.contract(request)
     }
   }
 

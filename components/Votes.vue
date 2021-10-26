@@ -176,21 +176,24 @@ export default {
 
     votes () {
       const votes = this.activeVotes
+      const scotDenom = 10 ** this.tribe_info.precision
       const rsharesTotal = this.rshares
-      const payout = this.payout || this.applyRewardsCurve(rsharesTotal)
+      const payout = this.payout / scotDenom
 
       let currRshares = 0
 
-      const pot = payout
-      const denom = Math.abs(this.applyRewardsCurve(rsharesTotal))
+      const pot = rsharesTotal > 0 ? payout : 1
+      const denom = rsharesTotal > 0
+        ? this.applyRewardsCurve(rsharesTotal)
+        : scotDenom
 
       for (let i = 0; i < votes.length; i++) {
         const vote = votes[i]
         vote.estimated_value = (
-          pot * (this.applyRewardsCurve(currRshares + Math.abs(vote.rshares)) - this.applyRewardsCurve(currRshares)) / denom
+          pot * (this.applyRewardsCurve(currRshares + vote.rshares) - this.applyRewardsCurve(currRshares)) / denom
         ).toFixed(this.tribe_info.precision)
 
-        currRshares += Math.abs(vote.rshares)
+        currRshares += vote.rshares
       }
 
       return votes.sort((a, b) => b.estimated_value - a.estimated_value)

@@ -12,6 +12,10 @@ export default ({ $config, $axios }, inject) => {
   SCOTAPI.onRequest((config) => {
     const params = { ...config.params, token: $config.TOKEN }
 
+    if ($config.IS_HIVE && config.url.startsWith('@')) {
+      params.hive = 1
+    }
+
     config.params = params
 
     return config

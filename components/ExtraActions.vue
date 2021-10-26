@@ -43,7 +43,10 @@ export default {
   },
 
   props: {
-    post: { type: Object, required: true }
+    type: { type: String, default: 'post' },
+    author: { type: String, required: true },
+    permlink: { type: String, required: true },
+    deletable: { type: Boolean, default: false }
   },
 
   data () {
@@ -70,31 +73,12 @@ export default {
         tribeConfig: this.tribe_config,
         tribeInfo: this.tribe_info
       })
-    },
-
-    type () {
-      return this.post.main_post ? 'post' : 'comment'
-    },
-
-    author () {
-      return this.post.author
-    },
-
-    permlink () {
-      return this.post.permlink
-    },
-
-    deletable () {
-      return this.post.vote_rshares <= 0 && this.post.children === 0
-    },
-
-    muted () {
-      return this.post.muted
     }
   },
 
   methods: {
     ...mapActions('post', ['requestBroadcastReblog', 'requestEditPost', 'requestBroadcastDelete'])
+
   }
 }
 </script>
