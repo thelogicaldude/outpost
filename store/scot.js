@@ -63,8 +63,11 @@ export const actions = {
         : await this.$scot.$get(endpoint, { params, cache: { ...this.$config.AXIOS_CACHE_CONFIG, maxAge: 5 * 60 * 1000 } })
 
       posts = posts.map((post) => {
-        post.estimated_payout_value = toFixedWithoutRounding((post.pending_token || post.total_payout_value) / 10 ** rootState.tribe_info.precision, rootState.tribe_info.precision)
-        post.curator_payout_value = toFixedWithoutRounding(post.curator_payout_value / 10 ** rootState.tribe_info.precision, rootState.tribe_info.precision)
+        const isPaidout = new Date(`${post.cashout_time}Z`).getTime() < Date.now()
+
+        post.estimated_payout_value = isPaidout
+          ? Number(post.total_payout_value)
+          : toFixedWithoutRounding(((Number(post.vote_rshares) ** rootState.tribe_config.author_curve_exponent) * rootState.tribe_info.reward_pool) / rootState.tribe_info.pending_rshares, rootState.tribe_info.precision)
 
         post.is_nsfw = hasNsfwTag(post.tags.split(','))
 
@@ -98,6 +101,18 @@ export const actions = {
 
       await Promise.all(requests)
 
+      if (posts.length > 0) {
+        posts = posts.reduce((acc, cur) => {
+          cur.active_votes = cur.active_votes.map(v => ({ ...v, rshares: Number(v.rshares) }))
+          cur.vote_rshares = Number(cur.vote_rshares)
+          cur.total_payout_value = Number(cur.total_payout_value)
+
+          acc.push(cur)
+
+          return acc
+        }, [])
+      }
+
       return posts
     } catch (e) {
       console.log(e)
@@ -111,8 +126,15 @@ export const actions = {
       const data = await this.$scot.$get(`@${author}/${permlink}`)
       post = data[TOKEN]
 
-      post.estimated_payout_value = toFixedWithoutRounding((post.pending_token || post.total_payout_value) / 10 ** rootState.tribe_info.precision, rootState.tribe_info.precision)
-      post.curator_payout_value = toFixedWithoutRounding(post.curator_payout_value / 10 ** rootState.tribe_info.precision, rootState.tribe_info.precision)
+      const isPaidout = new Date(`${post.cashout_time}Z`).getTime() < Date.now()
+
+      post.active_votes = post.active_votes.map(v => ({ ...v, rshares: Number(v.rshares) }))
+      post.vote_rshares = Number(post.vote_rshares)
+      post.total_payout_value = Number(post.total_payout_value)
+
+      post.estimated_payout_value = isPaidout
+        ? post.total_payout_value
+        : toFixedWithoutRounding(((Number(post.vote_rshares) ** rootState.tribe_config.author_curve_exponent) * rootState.tribe_info.reward_pool) / rootState.tribe_info.pending_rshares, rootState.tribe_info.precision)
 
       post.is_nsfw = hasNsfwTag(post.tags.split(','))
     } catch {
@@ -120,6 +142,32 @@ export const actions = {
     }
 
     return post
+  },
+
+  async fetchThread ({ rootState }, { author, permlink }) {
+    let posts = []
+
+    try {
+      const thread = await this.$scot.$get('get_thread', { params: { author, permlink } })
+
+      posts = thread.map((post) => {
+        const isPaidout = new Date(`${post.cashout_time}Z`).getTime() < Date.now()
+
+        post.active_votes = post.active_votes.map(v => ({ ...v, rshares: Number(v.rshares) }))
+        post.vote_rshares = Number(post.vote_rshares)
+        post.total_payout_value = Number(post.total_payout_value)
+
+        post.estimated_payout_value = isPaidout
+          ? post.total_payout_value
+          : toFixedWithoutRounding(((Number(post.vote_rshares) ** rootState.tribe_config.author_curve_exponent) * rootState.tribe_info.reward_pool) / rootState.tribe_info.pending_rshares, rootState.tribe_info.precision)
+
+        return post
+      })
+    } catch {
+      //
+    }
+
+    return posts
   },
 
   async fetchTrendingTags ({ commit }) {
